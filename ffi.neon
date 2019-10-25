@@ -1,0 +1,5 @@
+EXPORT TYPE ForeignFunction IS POINTER
+
+EXPORT DECLARE EXTENSION FUNCTION bind(library: String, name: String, returntype: String, argtypes: Array<String>): ForeignFunction
+EXPORT DECLARE EXTENSION FUNCTION invoke(f: ForeignFunction, args: Object...): Object
+EXPORT DECLARE EXTENSION FUNCTION unbind(f: ForeignFunction)
