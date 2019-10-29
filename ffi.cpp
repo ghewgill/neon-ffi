@@ -19,6 +19,8 @@ public:
     ffi_cif cif;
 };
 
+extern "C" {
+
 Ne_EXPORT int Ne_INIT(const struct Ne_MethodTable *methodtable)
 {
     Ne = methodtable;
@@ -33,7 +35,13 @@ Ne_FUNC(Ne_bind)
 
     auto *ffs = new ForeignFunctionStub();
     ffs->library = dlopen(library.c_str(), RTLD_LAZY);
+    if (ffs->library == NULL) {
+        Ne_RAISE_EXCEPTION("FileNotFound", "", 0);
+    }
     ffs->fp = reinterpret_cast<void_function_t>(dlsym(ffs->library, name.c_str()));
+    if (ffs->fp == NULL) {
+        Ne_RAISE_EXCEPTION("FunctionNotFound", "", 0);
+    }
     ffi_type *rtype = &ffi_type_void;
     ffi_status status = ffi_prep_cif(&ffs->cif, FFI_DEFAULT_ABI, 0, rtype, NULL);
     if (status != FFI_OK) {
@@ -49,7 +57,7 @@ Ne_FUNC(Ne_invoke)
     auto *ffs = Ne_PARAM_POINTER(ForeignFunctionStub, 0);
 
     if (ffs->library == NULL || ffs->fp == NULL) {
-        Ne_RAISE_EXCEPTION("InvalidParameter", 0, 0);
+        Ne_RAISE_EXCEPTION("InvalidParameter", "", 0);
     }
 
     ffi_call(&ffs->cif, ffs->fp, NULL, NULL);
@@ -68,3 +76,5 @@ Ne_FUNC(Ne_unbind)
 
     return Ne_SUCCESS;
 }
+
+} // extern "C"
